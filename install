@@ -18,7 +18,7 @@ then
 
 	echo "Installing dependencies"
 
-	apt-get -y -qq install hostapd udhcpd
+	apt-get -y -qq install udhcpd #hostapd #Not installing Hostapd cause im not doing wifi access point
 
 
 	####################################################################
@@ -42,15 +42,15 @@ then
 		cp /etc/network/interfaces /etc/network/interfaces.old
 	fi
 
-	if [ -f /etc/hostapd/hostapd.conf ]
-	then
-		cp /etc/hostapd/hostapd.conf /etc/hostapd/hostapd.conf.old
-	fi
+	#if [ -f /etc/hostapd/hostapd.conf ]
+	#then
+	#	cp /etc/hostapd/hostapd.conf /etc/hostapd/hostapd.conf.old
+	#fi
 
-	if [ -f /etc/default/hostapd ]
-	then
-		cp /etc/default/hostapd /etc/default/hostapd.old
-	fi
+	#if [ -f /etc/default/hostapd ]
+	#then
+	#	cp /etc/default/hostapd /etc/default/hostapd.old
+	#fi
 
 	if [ -f /etc/sysctl.conf ]
 	then
@@ -90,6 +90,8 @@ then
 			fi
 		fi
 	else
+	# These DNS servers will probably be changed later for the tor network. Going to try changing this later
+	# into one rolled up bundle
 		read -r -p "Please enter a custom dns server address of the form xxx.xxx.xxx.xxx : " _DNS
 		read -r -p "Please enter a custom router number from 0-254 : " _ROUTER
 		sed -e "s/ROUTER/${_ROUTER}/g" -e "s/DNS/${_DNS}/" ./config-files/udhcpd_template.conf > /etc/udhcpd.conf
@@ -105,51 +107,52 @@ then
 		cp ./config-files/interfaces /etc/network
 	fi
 
-	echo "Configuring hostapd"
-	read -r -p "Do you want to ues the default wifi password of 01234567890 and ssid of RaspberryPiFi? [y/N] " althostapdresponse
+	#echo "Configuring hostapd"
+	#read -r -p "Do you want to ues the default wifi password of 01234567890 and ssid of RaspberryPiFi? [y/N] " althostapdresponse
 
-	if [[ $althostapdresponse =~ ^([yY][eE][sS]|[yY])$ ]]
-	then
-		cp ./config-files/hostapd.conf /etc/hostapd
-	else
-		read -r -p "Please enter a new ssid: " _SSID
-		_PASSWORD1="0"
-		_PASSWORD2="1"
-		read -r -s -p "Please enter a new password atleast 8 characters long (lenght is not checked): " _PASSWORD1
-		echo
-		read -r -s -p "Please enter the new password again: " _PASSWORD2
-		echo
-		while [ ${_PASSWORD1} != ${_PASSWORD2} ]
-		do
-			echo "Password mismatch please try again."
-			read -r -s -p "Please enter a new password atleast 8 characters long (lenght is not checked): " _PASSWORD1
-			read -r -s -p "Please enter the new password again: " _PASSWORD2
-			echo
-		done
-		sed -e "s/0123456789A/${_PASSWORD1}/g" -e "s/RaspberryPiFi/${_SSID}/g" ./config-files/hostapd.conf > /etc/hostapd/hostapd.conf
-	fi
-	cp ./config-files/hostapd /etc/default
-
+	#if [[ $althostapdresponse =~ ^([yY][eE][sS]|[yY])$ ]]
+	#then
+	#	cp ./config-files/hostapd.conf /etc/hostapd
+	#else
+	#	read -r -p "Please enter a new ssid: " _SSID
+	#	_PASSWORD1="0"
+	#	_PASSWORD2="1"
+	#	read -r -s -p "Please enter a new password atleast 8 characters long (lenght is not checked): " _PASSWORD1
+	#	echo
+	#	read -r -s -p "Please enter the new password again: " _PASSWORD2
+	#	echo
+	#	while [ ${_PASSWORD1} != ${_PASSWORD2} ]
+	#	do
+	#		echo "Password mismatch please try again."
+	#		read -r -s -p "Please enter a new password atleast 8 characters long (lenght is not checked): " _PASSWORD1
+	#		read -r -s -p "Please enter the new password again: " _PASSWORD2
+	#		echo
+	#	done
+	#	sed -e "s/0123456789A/${_PASSWORD1}/g" -e "s/RaspberryPiFi/${_SSID}/g" ./config-files/hostapd.conf > /etc/hostapd/hostapd.conf
+	#fi
+	#cp ./config-files/hostapd /etc/default
+	#Again, dont need hostapd for this project
 
 	#############################################################
 	#   option for adafruit wifi adapter or any rtl871x adapter
 	#############################################################
 
-	read -r -p "Are you using an rtl871x chipset (such as one purchased via adafruit? (if in doubt, select no) [y/N] " adafruit
+	#read -r -p "Are you using an rtl871x chipset (such as one purchased via adafruit? (if in doubt, select no) [y/N] " adafruit
 
-	if [[ $adafruit =~ ^([yY][eE][sS]|[yY])$ ]]
-	then
-		mv /usr/sbin/hostapd /usr/sbin/hostapd.ORIG
-		echo "Adafruit hostapd binary copied"
-		cp ./hostapd-adafruit /usr/sbin/hostapd
-		cp ./config-files/hostapd-adafruit.conf /etc/hostapd/hostapd.conf
-		chmod 755 /usr/sbin/hostapd
-	fi
+	#if [[ $adafruit =~ ^([yY][eE][sS]|[yY])$ ]]
+	#then
+	#	mv /usr/sbin/hostapd /usr/sbin/hostapd.ORIG
+	#	echo "Adafruit hostapd binary copied"
+	#	cp ./hostapd-adafruit /usr/sbin/hostapd
+	#	cp ./config-files/hostapd-adafruit.conf /etc/hostapd/hostapd.conf
+	#	chmod 755 /usr/sbin/hostapd
+	#fi
 
 
 	echo "Configuring NAT"
 	cp ./config-files/sysctl.conf /etc
 
+	# Leaving this in here for shits n giggles
 	echo "Configuring iptables"
 	read -r -p "Do you require chromecast support for unblock-us? [y/N] " chromecastresponse
 	if [[ $chromecastresponse =~ ^([yY][eE][sS]|[yY])$ ]]
@@ -161,9 +164,10 @@ then
 
 	touch /var/lib/misc/udhcpd.leases
 
-	echo "Initialising access point"
-	service hostapd start
-	update-rc.d hostapd enable
+	# Dont initialize something that isnt there
+	#echo "Initialising access point"
+	#service hostapd start
+	#update-rc.d hostapd enable
 
 	echo "Initialising DHCP server"
 	service udhcpd start
